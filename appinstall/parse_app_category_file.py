@@ -4,7 +4,6 @@ app_first_category_file = "G:\\datasource\\appname.txt"
 
 file_path = "C:\\Users\\befy\\Desktop\\appcategory.txt"
 
-
 # with open(app_first_category_file,"r") as f:
 #     print(f.readline(3))
 
@@ -21,7 +20,7 @@ connectConfig = {
     'db': 'bigdata',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor
-    }
+}
 
 
 def do_select():
@@ -47,30 +46,24 @@ def do_select():
 def do_insert():
     dbConns = pymysql.connect(**connectConfig)
     with dbConns.cursor() as cursor:
-
-
-        with open(file_path,encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             for line in f:
                 print(line)
                 sql_line = line.rstrip("\n")
                 sql_list = sql_line.split("\t")
 
-                insert_value_str = "\"" +sql_list[0] + "\",\"" +  sql_list[1] + "\",\"" + sql_list[2] + "\",\"" + sql_list[3] + "\""
+                insert_value_str = "\"" + sql_list[0] + "\",\"" + sql_list[1] + "\",\"" + sql_list[2] + "\",\"" + \
+                                   sql_list[3] + "\""
                 print(insert_value_str)
 
-                sql_isert = "insert into rawappcategory(package, name,maincategory,secondary ) values("+  insert_value_str + ")"
+                sql_isert = "insert into rawappcategory(package, name,maincategory,secondary ) values(" + insert_value_str + ")"
 
                 try:
                     cursor.execute(sql_isert)
                     dbConns.commit()
                 except (pymysql.err.DataError, pymysql.err.ProgrammingError) as ex:
-                    print("something bad happens ",ex)
+                    print("something bad happens ", ex)
                     continue
 
 
 do_insert()
-
-
-
-
-

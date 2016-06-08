@@ -296,6 +296,7 @@ def get_whole_results(output_dir_path="./"):
     for model in phone_model:
         summary_headers.append(model)
 
+    import  time
     summary_sheet  = Dataset(*summary_data,headers= summary_headers, title="summary" )
     with open(output_dir_path + "summary.xlsx","wb") as f:
         f.write(summary_sheet.xlsx)

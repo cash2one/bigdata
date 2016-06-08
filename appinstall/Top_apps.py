@@ -4,6 +4,9 @@ import pymysql.cursors as cursors
 from tablib import Databook
 from tablib import Dataset
 
+from utils import db
+
+
 phone_model = ["Y37", "X6D", "X6PlusD", "Xplay5A"]
 phone_model_user_number = {
     "Y37": 100000,
@@ -13,6 +16,8 @@ phone_model_user_number = {
 }
 
 package_name_path = "G:\\datasource\\appname.txt"
+
+package_user_dir = "G:\\datasource\\appinstall_info"
 
 user_packages = {}
 package_users = {}
@@ -87,15 +92,17 @@ pre_stall_list = {
     }
 }
 
-connectConfig = {
-    'host': '127.0.0.1',
-    'port': 3306,
-    'user': 'root',
-    'password': 'root',
-    'db': 'bigdata',
-    'charset': 'utf8mb4',
-    'cursorclass': cursors.DictCursor
-}
+# connectConfig = {
+#     'host': '127.0.0.1',
+#     'port': 3306,
+#     'user': 'root',
+#     'password': 'root',
+#     'db': 'bigdata',
+#     'charset': 'utf8mb4',
+#     'cursorclass': cursors.DictCursor
+# }
+connectConfig = db.get_default_config()
+
 
 
 def load_package_name(file_path):
@@ -109,7 +116,6 @@ def load_package_name(file_path):
             templine = line.rstrip("\n")
             tem = templine.split("\t")
             package_name[tem[0]] = tem[1]
-            print(line)
     return package_name
 
 
@@ -126,12 +132,12 @@ def load_app_category():
     with dbConns.cursor() as cursor:
         query = "select package, name ,maincategory, secondary from rawappcategory;"
         temp = cursor.execute(query)
-        print(temp)
         raw_categorys = cursor.fetchmany(temp)
         categorys = {}
         for index in range(len(raw_categorys)):
             temp_line = raw_categorys[index]
             categorys[temp_line["package"]] = [temp_line["name"], temp_line["maincategory"], temp_line["secondary"]]
+    dbConns.close()
     return categorys
 
 
@@ -234,7 +240,6 @@ def get_package_details(package_name, model):
         "second_category": get_cagetory(package_name, level=2),
         "is_prestall": is_prestall(package_name, model)
     }
-    print(package_detail)
     return package_detail
 
 
@@ -245,7 +250,7 @@ def load_data():
     for model in phone_model:
         temp_user_packages = {}
         temp_package_users = {}
-        with open(model + "_user_packages.txt", "r") as f:
+        with open(package_user_dir + "\\"+ model + "_user_packages.txt", "r") as f:
             for line in f:
                 user_packages_line = line.split(",")
                 temp_user_packages[user_packages_line[0]] = {
@@ -253,7 +258,7 @@ def load_data():
                     "packages": user_packages_line[2:]
                 }
             user_packages[model] = temp_user_packages
-        with open(model + "_package_users.txt", "r") as f:
+        with open(package_user_dir + "\\"+ model + "_package_users.txt", "r") as f:
             for line in f:
                 package_users_line = line.split(",")
                 temp_package_users[package_users_line[0]] = {
@@ -266,7 +271,7 @@ def load_data():
 load_data()
 
 work_book = Databook()
-TOP_N = 151
+TOP_N = 1000
 for model in package_users:
     headers = ("应用包名", "应用名称", "应用安装数量", "一级分类", "二级分类", "是否预装", "安装比率")
     data = []
@@ -282,6 +287,9 @@ for model in package_users:
                      package_detail["second_category"], package_detail["is_prestall"],
                      int(package_detail["numbers"]) / phone_model_user_number[model]))
     dataset = Dataset(*data, headers=headers, title=model)
+    with open(model + "_TOP"+ str(TOP_N) + ".xlsx", "wb") as f:
+        f.write(dataset.xlsx)
+
     work_book.add_sheet(dataset)
-    with open(str(TOP_N) + ".xlsx", "wb") as f:
-        f.write(work_book.xlsx)
+    with open(str(TOP_N) + ".xls", "wb") as f:
+        f.write(work_book.xls)
