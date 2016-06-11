@@ -6,7 +6,7 @@ from crawler import mi_config
 from crawler.app_info import AppInfo
 from selenium import webdriver
 
-
+import time
 
 def get_app_detail(app_url, output_file_path , category = "unknow"):
     """
@@ -26,25 +26,32 @@ def get_app_detail(app_url, output_file_path , category = "unknow"):
     headers = {"User-Agent": user_agent}
     print(app_url)
     req = urllib.request.Request(app_url, data= None, headers= headers)
-    with urllib.request.urlopen(req) as response:
-        web_page = response.read()
-        soup = BeautifulSoup(web_page,"html.parser")
-        developer = soup.select(".intro-titles p")
-        name = soup.select(".intro-titles h3")
-        package = soup.select(".cf .special-li")
-        permissions = soup.select(".details .second-ul li")
-        category = soup.select(".intro-titles ")
 
+    try :
+        with urllib.request.urlopen(req) as response:
+            web_page = response.read()
+            soup = BeautifulSoup(web_page,"html.parser")
+            developer = soup.select(".intro-titles p")
+            name = soup.select(".intro-titles h3")
+            package = soup.select(".cf .special-li")
+            permissions = soup.select(".details .second-ul li")
+            category = soup.select(".intro-titles ")
+            perm_list = []
+            for i in range(len(permissions)):
+                perm_list.append(permissions[i].string)
+            result["developer"] = developer[0].string
+            result["name"] = name[0].string
+            result["package"] = package[0].string
+            result["permission"] = perm_list
+            # result["category"] =
+    except urllib.error.URLError :
+        current_time = time.localtime()
+        hour = current_time[3]
+        minute = current_time[4]
+        with open("error.log","w+") as f:
+            f.writelines(str(hour)+":"+ str(minute)+  "\turl:"+app_url)
 
-
-        perm_list = []
-        for i in range(len(permissions)):
-            perm_list.append(permissions[i].string)
-        result["developer"] = developer[0].string
-        result["name"] = name[0].string
-        result["package"] = package[0].string
-        result["permission"] = perm_list
-        # result["category"] =
+        raise Exception
 
     with open(output_file_path, "a", encoding="utf-8") as f:
         line_list = []
@@ -115,7 +122,11 @@ for category in mi_categorys:
         # browser.quit()
         for i in range(len(applist)):
             app_url = base_url + applist[i]["href"]
-            app_detail = get_app_detail(app_url, "app_detail.txt", category=category)
+            try:
+                app_detail = get_app_detail(app_url, "app_detail.txt", category=category)
+            except Exception:
+                print("spc")
+                continue
             app = AppInfo()
             app.set_app_name(app_name=app_detail['name'])
             print(app)
