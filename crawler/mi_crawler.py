@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 import urllib.request
 
 from crawler import mi_config
+from crawler.app_info import AppInfo
+from selenium import webdriver
+
 
 
 def get_app_detail(app_url, output_file_path , category = "unknow"):
@@ -13,8 +16,10 @@ def get_app_detail(app_url, output_file_path , category = "unknow"):
     :param app_url
     :return: 讲上树信息按照字典的形式反悔
     """
+
     if app_url is None:
         return "the input url is None, please check"
+
     result = {}
     result["category"] = category               # 默认设置为unknow
     user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
@@ -29,6 +34,9 @@ def get_app_detail(app_url, output_file_path , category = "unknow"):
         package = soup.select(".cf .special-li")
         permissions = soup.select(".details .second-ul li")
         category = soup.select(".intro-titles ")
+
+
+
         perm_list = []
         for i in range(len(permissions)):
             perm_list.append(permissions[i].string)
@@ -84,8 +92,11 @@ user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
 headers = {"User-Agent":user_agent}
 req = urllib.request.Request(web_url, headers)
 mi_app_url_stack = []
+app_list = []
 
 mi_categorys = mi_config.mi_category_list
+browser = webdriver.Firefox()
+
 for category in mi_categorys:
     web_url = base_url+ "/category/" + str(category)
     max_page = mi_categorys[category][1]
@@ -95,12 +106,17 @@ for category in mi_categorys:
         user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
         headers = {"User-Agent": user_agent}
         req = urllib.request.Request(web_url, data=None, headers=headers)
-        with urllib.request.urlopen(web_url) as response:
-            web_page = response.read()
-            soup = BeautifulSoup(web_page, "html.parser")
-            print(soup.prettify())
-            applist = soup.select("#all-applist li h5 a")
-            print("applist is " + str(len(applist)))
-            for i in range(len(applist)):
-                app_url = base_url + applist[i]["href"]
-                app_detail = get_app_detail(app_url, "app_detail.txt", category=category)
+
+        browser.get(web_url)
+        web_page = browser.page_source
+        soup = BeautifulSoup(web_page, "html.parser")
+        applist = soup.select("#all-applist li h5 a")
+        print("applist is " + str(len(applist)))
+        # browser.quit()
+        for i in range(len(applist)):
+            app_url = base_url + applist[i]["href"]
+            app_detail = get_app_detail(app_url, "app_detail.txt", category=category)
+            app = AppInfo()
+            app.set_app_name(app_name=app_detail['name'])
+            print(app)
+            app_list.append(app)
