@@ -1,3 +1,4 @@
+"crawler time = 2016-07-08"
 掌上明珠,com.hundsun.stockwinner.dwzq,东吴证券股份有限公司,0次评分,0,金融理财
 华通交易,com.holysky,上海华通铂银交易市场有限公司,0次评分,0,金融理财
 卡牛信用卡管家,com.mymoney.sms,深圳市随手科技有限公司,18282次评分,0,金融理财
